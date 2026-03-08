@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-hover: #0284c7;
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 0 auto;
+        }
+
+        /* --- Header --- */
+        .header { text-align: center; margin-bottom: 50px; }
+        h1 { font-size: 2.8rem; margin-bottom: 0.5rem; color: #0f172a; font-weight: 800; letter-spacing: -1px; }
+        .subtitle { color: #64748b; font-size: 1.1rem; }
+
+        /* --- Input Area --- */
+        .input-card {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 40px;
+            border: 1px solid var(--border);
+        }
+        label { font-weight: 600; color: #334155; font-size: 0.95rem; display: block; margin-bottom: 8px; }
+        .file-upload-wrapper {
+            display: block; margin: 10px 0 25px; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 30px;
+            text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;
+        }
+        .file-upload-wrapper:hover { border-color: var(--primary); background: #f0f9ff; }
+        input[type="file"] { display: none; }
+        .file-icon { font-size: 2rem; margin-bottom: 10px; color: #94a3b8; }
+        .file-name { color: #475569; font-weight: 500; }
+        textarea {
+            width: 100%; height: 120px; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px;
+            font-size: 0.95rem; margin: 10px 0 25px; box-sizing: border-box; resize: vertical; font-family: inherit;
+        }
+        textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
+        button {
+            width: 100%; background: #0f172a; color: white; border: none; padding: 14px; border-radius: 8px;
+            font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        button:hover { background: #1e293b; transform: translateY(-1px); }
+
+        /* --- Grid Layout --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1.5fr;
+            gap: 24px;
+            animation: slideUp 0.5s ease-out;
+        }
+        @media (max-width: 1000px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .panel {
+            background: var(--card-bg); padding: 30px; border-radius: 16px;
+            border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .panel:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+        h3 { color: #0f172a; font-size: 1.05rem; margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+        /* --- Left Column: Scores --- */
+        .score-panel { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .score-value { font-size: 2.2rem; font-weight: 800; color: var(--primary); line-height: 1; margin: 0; }
+        .score-label { font-weight: 600; color: #64748b; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 15px; margin-bottom: 30px;}
+        .radar-container { width: 100%; height: 220px; margin-top: 10px; }
+
+        /* --- Middle Column: Skills --- */
+        .tags-container { margin-bottom: 20px; }
+        .category-title { font-size: 0.8rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .skill-tag { display: inline-block; background: #f1f5f9; color: #475569; padding: 5px 10px; border-radius: 6px; margin: 0 5px 6px 0; font-size: 0.85rem; font-weight: 600; border: 1px solid #e2e8f0; }
+        .missing-tag { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+
+        /* --- Right Column: Insights --- */
+        .warning-box { background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .warning-title { color: #991b1b; margin-top: 0; margin-bottom: 8px; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; font-weight: 700; }
+        .warning-list { margin: 0; padding-left: 20px; color: #7f1d1d; font-size: 0.85rem; }
+
+        .insight-list { margin: 0; padding-left: 20px; color: #334155; font-size: 0.9rem; line-height: 1.7; }
+        .insight-list li { margin-bottom: 8px; }
+
+        .terminal-box { margin-top: 25px; background: #0f172a; color: #f8fafc; border-radius: 8px; overflow: hidden; }
+        .terminal-header { background: #1e293b; padding: 10px 15px; display: flex; gap: 6px; align-items: center; }
+        .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-red { background: #ef4444; } .dot-yellow { background: #f59e0b; } .dot-green { background: #10b981; }
+        .terminal-title { margin-left: 8px; color: #94a3b8; font-size: 0.8rem; font-family: monospace; }
+        .terminal-body { padding: 20px; }
+        .terminal-body ol { margin: 0; padding-left: 20px; font-family: 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; color: #38bdf8;}
+        .terminal-body li span { color: #f8fafc; }
+
+        /* --- Heatmap --- */
+        .heatmap-panel { grid-column: 1 / -1; margin-top: 0; }
+        .heatmap-content { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid var(--border); max-height: 300px; overflow-y: auto; font-size: 0.85rem; white-space: pre-wrap; color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="header">
+            <h1>AI Resume Analyzer</h1>
+            <p class="subtitle">AI Resume Analysis and Job Description Matching</p>
+        </div>
+
+        <div class="input-card">
+            <form method="POST" enctype="multipart/form-data">
+                <label>1. Upload Candidate Resume</label>
+                <label class="file-upload-wrapper" for="file-upload">
+                    <div class="file-icon">📄</div>
+                    <div class="file-name" id="file-name-display">Click to browse or drag PDF here</div>
+                    <input id="file-upload" type="file" name="resume" accept=".pdf" required onchange="document.getElementById('file-name-display').textContent = this.files[0].name">
+                </label>
+                <label>2. Target Job Description</label>
+                <textarea name="job_description" required placeholder="Paste the full job description requirements here..."></textarea>
+                <button id="analyze-btn" type="submit">Run Resume Analysis →</button>
+            </form>
+        </div>
+
+        {% if score is defined %}
+        <div class="dashboard-grid">
+
+            <div class="panel score-panel">
+                <h3 style="border:none; justify-content:center; margin-bottom: 10px;">Resume–Job Match Score</h3>
+
+                <div style="position: relative; width: 130px; height: 130px; margin: 0 auto;">
+                    <canvas id="matchChart"></canvas>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%;">
+                        <div class="score-value">{{ score }}<span style="font-size: 1.1rem;">%</span></div>
+                    </div>
+                </div>
+                <p class="score-label">Overall Compatibility</p>
+
+                <div style="width: 100%; border-top: 1px solid var(--border); padding-top: 20px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Resume Strength Radar</h4>
+                    <div class="radar-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>📊 Skill Analysis</h3>
+
+                <div class="tags-container">
+                    <div class="category-title" style="color: #991b1b;">⚠️ Important Missing Skills</div>
+                    {% for skill in missing %}
+                        <span class="skill-tag missing-tag">{{ skill }}</span>
+                    {% else %}
+                        <p style="font-size: 0.85rem; color: #166534; margin-top: 0; font-weight: 600;">All requirements met!</p>
+                    {% endfor %}
+                </div>
+
+                <hr style="border: 0; border-top: 1px dashed var(--border); margin: 20px 0;">
+
+                {% for category, skills in categorized_skills.items() %}
+                    {% if skills|length > 0 %}
+                    <div class="tags-container">
+                        <div class="category-title">{{ category }}</div>
+                        {% for skill in skills %}
+                            <span class="skill-tag">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p style="font-size: 0.85rem; color: #94a3b8; font-style: italic;">No specific skill entities detected.</p>
+                {% endfor %}
+            </div>
+
+            <div class="panel">
+                <h3>💡 Analysis Insights</h3>
+
+                {% if warnings %}
+                <div class="warning-box">
+                    <h4 class="warning-title">⚠️ ATS Compatibility Issues</h4>
+                    <ul class="warning-list">
+                        {% for warning in warnings %}
+                            <li>{{ warning }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if improvements %}
+                <div style="margin-bottom: 20px;">
+                    <div class="category-title">STRUCTURAL FEEDBACK</div>
+                    <ul class="insight-list">
+                        {% for item in improvements %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if suggestions %}
+                <div class="terminal-box">
+                    <div class="terminal-header">
+                        <div class="terminal-dot dot-red"></div>
+                        <div class="terminal-dot dot-yellow"></div>
+                        <div class="terminal-dot dot-green"></div>
+                        <div class="terminal-title">bash - upskill_path.sh</div>
+                    </div>
+                    <div class="terminal-body">
+                        <ol>
+                            {% for suggestion in suggestions %}
+                                <li>{{ suggestion.split(':')[0] }}: <span>{{ suggestion.split(':')[1] }}</span></li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if heatmap_html %}
+            <div class="panel heatmap-panel">
+                <h3>🔥 Resume Parsing Preview</h3>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: -10px; margin-bottom: 15px;">
+                    Preview showing how the system detected skills and keywords in the resume:
+                </p>
+                <div class="heatmap-content">
+                    {{ heatmap_html | safe }}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // --- Loading State UX ---
+            // This runs immediately so the button works even before a resume is uploaded
+            document.querySelector("form").addEventListener("submit", function() {
+                const btn = document.getElementById("analyze-btn");
+                if (btn) {
+                    btn.innerHTML = "Analyzing Resume... ⏳";
+                    btn.disabled = true;
+                    btn.style.opacity = "0.8";
+                    btn.style.cursor = "not-allowed";
+                }
+            });
+
+            // --- Chart & Score Logic ---
+            // The charts will only attempt to render if Flask successfully passed a score
+            setTimeout(() => {
+                const matchScore = {{ score }};
+
+                // Dynamic Score Color Logic
+                const scoreElement = document.querySelector(".score-value");
+                let chartColor = "#0ea5e9"; // Default Blue
+
+                if (scoreElement) {
+                    if (matchScore >= 75) {
+                        chartColor = "#16a34a"; // Green for good match
+                    } else if (matchScore >= 50) {
+                        chartColor = "#f59e0b"; // Yellow for medium match
+                    } else {
+                        chartColor = "#ef4444"; // Red for poor match
+                    }
+                    scoreElement.style.color = chartColor;
+                }
+
+                // 1. Overall Match Doughnut Chart
+                const donutCtx = document.getElementById('matchChart').getContext('2d');
+                new Chart(donutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Match', 'Gap'],
+                        datasets: [{
+                            data: [matchScore, Math.max(0, 100 - matchScore)],
+                            // Make the doughnut ring match the dynamic score color!
+                            backgroundColor: [chartColor, '#f1f5f9'],
+                            borderWidth: 0,
+                            borderRadius: 20,
+                        }]
+                    },
+                    options: {
+                        cutout: '90%', responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        animation: { animateScale: true, animateRotate: true, duration: 1000 }
+                    }
+                });
+
+                // 2. Multi-Dimensional Radar Chart
+                const radarCtx = document.getElementById('radarChart').getContext('2d');
+                new Chart(radarCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Semantic', 'Keywords', 'Structure', 'Impact', 'ATS Format'],
+                        datasets: [{
+                            label: 'Score',
+                            data: [
+                                {{ radar_scores.semantic_match }},
+                                {{ radar_scores.keyword_match }},
+                                {{ radar_scores.structure }},
+                                {{ radar_scores.impact }},
+                                {{ radar_scores.ats_compatibility }}
+                            ],
+                            backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                            borderColor: '#0ea5e9',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#0ea5e9',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#0ea5e9'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { color: 'rgba(0,0,0,0.1)' },
+                                grid: { color: 'rgba(0,0,0,0.1)' },
+                                pointLabels: { font: { size: 10, family: 'Inter', weight: '600' }, color: '#64748b' },
+                                ticks: { display: false, min: 0, max: 100, stepSize: 25 }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }, 100);
+        </script>
+        {% endif %}
+    </div>
+</body>
+</html>
