@@ -1,0 +1,13 @@
+Position: Senior Backend AI Engineer
+
+About the Role:
+We are seeking a highly skilled Senior Backend AI Engineer to design and implement scalable microservices using Python and Django. You will be responsible for managing robust data pipelines and deploying advanced deep learning models into production.
+
+Key Requirements:
+* 4+ years of experience in backend development using Python and web frameworks like Django or Flask.
+* Strong expertise in Data & AI, specifically building and deploying Machine Learning and NLP models using PyTorch.
+* Deep understanding of database architecture, particularly with PostgreSQL.
+* Proven experience with Cloud & DevOps tools. You must be able to containerize applications using Docker and deploy them on AWS.
+* Ability to build and maintain automated CI/CD pipelines.
+* Strong Agile methodology experience, with excellent problem solving, communication, and teamwork skills.
+* Experience building RESTful APIs and microservices architectures.
